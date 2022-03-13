@@ -212,6 +212,8 @@ with Engine(custom_parser=parser) as engine:
             mask_params = mask_params.cuda(non_blocking=True)
 
             # unsupervised loss on model/branch#1
+            
+            #------cutMix 적용. unsup_imgs0, unsup_imgs1을 cutMix 함---------#
             batch_mix_masks = mask_params
             unsup_imgs_mixed = unsup_imgs_0 * (1 - batch_mix_masks) + unsup_imgs_1 * batch_mix_masks
             with torch.no_grad():
@@ -225,10 +227,8 @@ with Engine(custom_parser=parser) as engine:
                 _, logits_u1_tea_2 = model(unsup_imgs_1, step=2)
                 logits_u0_tea_2 = logits_u0_tea_2.detach()
                 logits_u1_tea_2 = logits_u1_tea_2.detach()
-
-            # Mix teacher predictions using same mask
-            # It makes no difference whether we do this with logits or probabilities as
-            # the mask pixels are either 1 or 0
+            
+            # model output에 대해서도 동일하게 cutMix 진행후 pseudo label 생성
             logits_cons_tea_1 = logits_u0_tea_1 * (1 - batch_mix_masks) + logits_u1_tea_1 * batch_mix_masks
             _, ps_label_1 = torch.max(logits_cons_tea_1, dim=1)
             ps_label_1 = ps_label_1.long()
@@ -240,7 +240,8 @@ with Engine(custom_parser=parser) as engine:
             _, logits_cons_stu_1 = model(unsup_imgs_mixed, step=1)
             # Get student#2 prediction for mixed image
             _, logits_cons_stu_2 = model(unsup_imgs_mixed, step=2)
-
+            
+            # CPS loss 계산
             cps_loss = criterion_cps(logits_cons_stu_1, ps_label_2) + criterion_cps(logits_cons_stu_2, ps_label_1)
             dist.all_reduce(cps_loss, dist.ReduceOp.SUM)
             cps_loss = cps_loss / engine.world_size
