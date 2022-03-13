@@ -147,6 +147,8 @@ class CityScape(BaseDataset):
 
     def __getitem__(self, index):
         if self._file_length is not None:
+            
+            # _construct_new_file_names : data 수가 적은 labeled data의 index를 unlabeled data와 동일하게 중복하여 sampling함.
             names = self._construct_new_file_names(self._file_length)[index]
         else:
             names = self._file_names[index]
