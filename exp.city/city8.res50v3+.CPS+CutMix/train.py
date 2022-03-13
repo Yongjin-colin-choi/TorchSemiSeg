@@ -47,6 +47,8 @@ For CutMix
 '''
 import mask_gen
 from custom_collate import SegCollate
+
+# training image에 CutMix 시킬 mask를 생성해줌. mask 크기, 비율 등의 인자를 받음.
 mask_generator = mask_gen.BoxMaskGenerator(prop_range=config.cutmix_mask_prop_range, n_boxes=config.cutmix_boxmask_n_boxes,
                                            random_aspect_ratio=not config.cutmix_boxmask_fixed_aspect_ratio,
                                            prop_by_area=not config.cutmix_boxmask_by_size, within_bounds=not config.cutmix_boxmask_outside_bounds,
@@ -68,39 +70,47 @@ with Engine(custom_parser=parser) as engine:
 
     cudnn.benchmark = True
 
+    # Seed 고정
     seed = config.seed
     if engine.distributed:
         seed = engine.local_rank
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed(seed)
-
-    # data loader + unsupervised data loader
+    
+    ########--------- Data loader ---------########
+    # supervised data loader + unsupervised data loader(cutMix, 그냥 data)
     train_loader, train_sampler = get_train_loader(engine, CityScape, train_source=config.train_source, \
                                                    unsupervised=False, collate_fn=collate_fn)
     unsupervised_train_loader_0, unsupervised_train_sampler_0 = get_train_loader(engine, CityScape, \
                 train_source=config.unsup_source, unsupervised=True, collate_fn=mask_collate_fn)
     unsupervised_train_loader_1, unsupervised_train_sampler_1 = get_train_loader(engine, CityScape, \
                 train_source=config.unsup_source, unsupervised=True, collate_fn=collate_fn)
-
+    ########-------------------------------########
+    
+    # tensorboard 사용 part
     if engine.distributed and (engine.local_rank == 0):
         tb_dir = config.tb_dir + '/{}'.format(time.strftime("%b%d_%d-%H-%M", time.localtime()))
         generate_tb_dir = config.tb_dir + '/tb'
         logger = SummaryWriter(log_dir=tb_dir)
         engine.link_tb(tb_dir, generate_tb_dir)
-
+    
+    ########--------- Supervised loss & CPS loss 정의 ---------########
     # config network and criterion
     pixel_num = 50000 * config.batch_size // engine.world_size
     criterion = ProbOhemCrossEntropy2d(ignore_label=255, thresh=0.7,
                                        min_kept=pixel_num, use_weight=False)
     criterion_cps = nn.CrossEntropyLoss(reduction='mean', ignore_index=255)
 
+    ########---------------------------------------------------########
     if engine.distributed:
         BatchNorm2d = SyncBatchNorm
-
+    
+    ########--------- model 및 hyperparameter 정의 ---------########
     model = Network(config.num_classes, criterion=criterion,
                     pretrained_model=config.pretrained_model,
                     norm_layer=BatchNorm2d)
+    # business_layer는 header 부분, 2개의 network 각각 weight init
     init_weight(model.branch1.business_layer, nn.init.kaiming_normal_,
                 BatchNorm2d, config.bn_eps, config.bn_momentum,
                 mode='fan_in', nonlinearity='relu')
@@ -137,6 +147,7 @@ with Engine(custom_parser=parser) as engine:
                                   weight_decay=config.weight_decay)
 
     # config lr policy
+    # niters_per_epoch은 supervised data와 unsupervised data 중 많은 것을 기준으로 함.
     total_iteration = config.nepochs * config.niters_per_epoch
     lr_policy = WarmUpPolyLR(base_lr, config.lr_power, total_iteration, config.niters_per_epoch * config.warm_up_epoch)
 
@@ -149,7 +160,7 @@ with Engine(custom_parser=parser) as engine:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = DataParallelModel(model, device_ids=engine.devices)
         model.to(device)
-
+    # epoch, iteration, optimizer, state_dict 등 관리
     engine.register_state(dataloader=train_loader, model=model,
                           optimizer_l=optimizer_l, optimizer_r=optimizer_r)
     if engine.continue_state_object:
@@ -167,7 +178,8 @@ with Engine(custom_parser=parser) as engine:
             pbar = tqdm(range(10), file=sys.stdout, bar_format=bar_format)
         else:
             pbar = tqdm(range(config.niters_per_epoch), file=sys.stdout, bar_format=bar_format)
-
+        
+        # 데이터 input이 3종류나 있어서, for문으로 dataloader를 바로 돌리기 힘들어서 iter로 학습을 돌림.
         dataloader = iter(train_loader)
         unsupervised_dataloader_0 = iter(unsupervised_train_loader_0)
         unsupervised_dataloader_1 = iter(unsupervised_train_loader_1)
