@@ -12,10 +12,13 @@ from base_model import resnet50
 class Network(nn.Module):
     def __init__(self, num_classes, criterion, norm_layer, pretrained_model=None):
         super(Network, self).__init__()
+        
+        # ---------각 모델을 init--------- #
         self.branch1 = SingleNetwork(num_classes, criterion, norm_layer, pretrained_model)
         self.branch2 = SingleNetwork(num_classes, criterion, norm_layer, pretrained_model)
 
     def forward(self, data, step=1):
+        # ---------inference 시에는 branch1만을 이용--------- #
         if not self.training:
             pred1 = self.branch1(data)
             return pred1
