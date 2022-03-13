@@ -96,7 +96,8 @@ def get_train_loader(engine, dataset, train_source, unsupervised=False, collate_
                     'train_source': train_source,
                     'eval_source': config.eval_source}
     train_preprocess = TrainPre(config.image_mean, config.image_std)
-
+    
+    # unsupervised, supervised는 gt 유무만 차이남.
     if unsupervised is False:
         train_dataset = dataset(data_setting, "train", train_preprocess,
                                 config.max_samples, unsupervised=False)
@@ -107,7 +108,8 @@ def get_train_loader(engine, dataset, train_source, unsupervised=False, collate_
     train_sampler = None
     is_shuffle = True
     batch_size = config.batch_size
-
+    
+    #multi GPU setting의 경우, DistributedSampler를 이용해 Data를 각 GPU에 Scatter시킴. batchsize도 각 GPU 갯수(engine.world_size)로 나눠줌.
     if engine.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(
             train_dataset)
