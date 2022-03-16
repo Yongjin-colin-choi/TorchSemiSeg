@@ -46,9 +46,7 @@ Please consider citing this project in your publications if it helps your resear
   year={2021}
 }
 ```
-Loss_l/Loss_r
 <img src=ReadmePic/loss_l.png width="300"> <img src=ReadmePic/loss_r.png width="300"> 
-Loss_CPS
 <img src=ReadmePic/loss_cps.png width="300">
 
 #### TODO
