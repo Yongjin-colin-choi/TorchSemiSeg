@@ -1,4 +1,4 @@
-# TorchSemiSeg
+# Semi-supervised Sementic Segmentation with Cross Pseudo Supervision
 <br>
 
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/semi-supervised-semantic-segmentation-with-3/semi-supervised-semantic-segmentation-on-2)](https://paperswithcode.com/sota/semi-supervised-semantic-segmentation-on-2?p=semi-supervised-semantic-segmentation-with-3)
