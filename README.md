@@ -50,6 +50,10 @@ Please consider citing this project in your publications if it helps your resear
 ## CutMix
 <img src=ReadmePic/cutmix.png width="300">
 
+- cutout, mixup과 마찬가지로 regularization 기법 중 하나.
+- cutout은 patch를 잘라내어 local한 정보 손실을 유발, mixup은 interpolation을 하여 이미지 정보가 왜곡됨.
+- 이미지의 local한 부분에만 집중하지않고, 덜 중요한 부분까지 focusing하게 하여 segmentation task에 적합함.
+
 ## Loss
 <img src=ReadmePic/loss_l.png width="300"> <img src=ReadmePic/loss_r.png width="300"> 
 <img src=ReadmePic/loss_cps.png width="300">
