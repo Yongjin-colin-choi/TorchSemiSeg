@@ -34,19 +34,6 @@ Please refer to the [Installation](./docs/installation.md) document.
 Please follow the [Getting Started](./docs/getting_started.md) document.
 
 
-## Citation
-
-Please consider citing this project in your publications if it helps your research.
-
-```bibtex
-@inproceedings{chen2021-CPS,
-  title={Semi-Supervised Semantic Segmentation with Cross Pseudo Supervision},
-  author={Chen, Xiaokang and Yuan, Yuhui and Zeng, Gang and Wang, Jingdong},
-  booktitle={IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
-  year={2021}
-}
-```
-
 ## CutMix
 <img src=ReadmePic/cutmix.png width="300">
 
@@ -63,3 +50,17 @@ Please consider citing this project in your publications if it helps your resear
 - [x] Code for CPS + CutMix
 - [x] Code for Cityscapes dataset
 - [x] Other SOTA semi-supervised segmentation methods
+
+
+## Citation
+
+Please consider citing this project in your publications if it helps your research.
+
+```bibtex
+@inproceedings{chen2021-CPS,
+  title={Semi-Supervised Semantic Segmentation with Cross Pseudo Supervision},
+  author={Chen, Xiaokang and Yuan, Yuhui and Zeng, Gang and Wang, Jingdong},
+  booktitle={IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year={2021}
+}
+```
